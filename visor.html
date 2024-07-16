@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visor de Productos de Amazon</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        header {
+            background-color: #232f3e;
+            color: white;
+            padding: 10px 0;
+            text-align: center;
+        }
+        main {
+            padding: 20px;
+            max-width: 800px;
+            margin: auto;
+        }
+        .product-list, .product-details {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .product-details img {
+            max-width: 100%;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .product-details h2 {
+            margin-top: 0;
+        }
+        .product-details p {
+            margin: 5px 0;
+        }
+        .product-item {
+            margin-bottom: 10px;
+        }
+        .product-item span {
+            display: block;
+        }
+        .product-item button {
+            padding: 10px;
+            font-size: 16px;
+            background-color: #232f3e;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .product-item button:hover {
+            background-color: #1e2532;
+        }
+        .sentiment-analysis {
+            margin-top: 20px;
+        }
+        .sentiment-analysis p {
+            margin: 5px 0;
+        }
+        .sentiment-analysis .positive {
+            color: green;
+        }
+        .sentiment-analysis .neutral {
+            color: grey;
+        }
+        .sentiment-analysis .negative {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Visor de Productos de Amazon</h1>
+    </header>
+    <main>
+        <div id="productList" class="product-list"></div>
+        <div id="productDetails" class="product-details"></div>
+    </main>
+    <script>
+        async function loadProducts() {
+            const url = "https://real-time-amazon-data.p.rapidapi.com/search";
+            const querystring = {
+                "query": "Phone",
+                "page": "1",
+                "country": "US",
+                "sort_by": "RELEVANCE",
+                "product_condition": "ALL"
+            };
+
+            const headers = {
+                "x-rapidapi-key": "3aefbfaf31msh6e91d0f7b559d03p1a9f67jsn9dea5372850c",
+                "x-rapidapi-host": "real-time-amazon-data.p.rapidapi.com"
+            };
+
+            try {
+                const response = await fetch(`${url}?${new URLSearchParams(querystring)}`, {
+                    method: 'GET',
+                    headers: headers
+                });
+                const data = await response.json();
+                const products = data['data']['products'];
+                displayProductList(products);
+            } catch (error) {
+                console.error('Error fetching products:', error);
+                document.getElementById('productList').innerHTML = "<p>Error al cargar los productos.</p>";
+            }
+        }
+
+        function displayProductList(products) {
+            const productList = products.map(product => `
+                <div class="product-item">
+                    <span><strong>ASIN:</strong> ${product.asin}</span>
+                    <span><strong>Título:</strong> ${product.product_title}</span>
+                    <img src="${product.product_photo}" alt="${product.product_title}" style="width: 100px;">
+                    <button onclick="displayProductDetails('${product.asin}')">Ver Detalles</button>
+                </div>
+            `).join('');
+            document.getElementById('productList').innerHTML = productList;
+        }
+
+        async function displayProductDetails(asin) {
+            const url = "https://real-time-amazon-data.p.rapidapi.com/search";
+            const querystring = {
+                "query": "Phone",
+                "page": "1",
+                "country": "US",
+                "sort_by": "RELEVANCE",
+                "product_condition": "ALL"
+            };
+
+            const headers = {
+                "x-rapidapi-key": "3aefbfaf31msh6e91d0f7b559d03p1a9f67jsn9dea5372850c",
+                "x-rapidapi-host": "real-time-amazon-data.p.rapidapi.com"
+            };
+
+            try {
+                const response = await fetch(`${url}?${new URLSearchParams(querystring)}`, {
+                    method: 'GET',
+                    headers: headers
+                });
+                const data = await response.json();
+                const products = data['data']['products'];
+                const product = products.find(p => p['asin'] === asin);
+
+                if (product) {
+                    const productDetails = `
+                        <img src="${product.product_photo}" alt="${product.product_title}">
+                        <h2>${product.product_title}</h2>
+                        <p><strong>Precio:</strong> ${product.product_price}</p>
+                        <p><strong>Precio Original:</strong> ${product.product_original_price}</p>
+                        <p><strong>Calificación:</strong> ${product.product_star_rating} estrellas (${product.product_num_ratings} calificaciones)</p>
+                        <p><strong>ASIN:</strong> ${product.asin}</p>
+                        <p><strong>Número de Ofertas:</strong> ${product.product_num_offers}</p>
+                        <p><strong>Precio Mínimo de Oferta:</strong> ${product.product_minimum_offer_price}</p>
+                        <p><strong>Mejor Vendido:</strong> ${product.is_best_seller ? 'Sí' : 'No'}</p>
+                        <p><strong>Opción de Amazon:</strong> ${product.is_amazon_choice ? 'Sí' : 'No'}</p>
+                        <p><strong>Prime:</strong> ${product.is_prime ? 'Sí' : 'No'}</p>
+                        <p><strong>Amigable con el Clima:</strong> ${product.climate_pledge_friendly ? 'Sí' : 'No'}</p>
+                        <p><strong>Volumen de Ventas:</strong> ${product.sales_volume}</p>
+                        <p><strong>Entrega:</strong> ${product.delivery}</p>
+                        <p><strong>Tiene Variaciones:</strong> ${product.has_variations ? 'Sí' : 'No'}</p>
+                        <p><strong>URL del Producto:</strong> <a href="${product.product_url}" target="_blank">Ver en Amazon</a></p>
+                        <div class="sentiment-analysis" id="sentimentAnalysis${product.asin}"></div>
+                    `;
+                    document.getElementById('productDetails').innerHTML = productDetails;
+                    displayComments(product.asin);
+                } else {
+                    document.getElementById('productDetails').innerHTML = "<p>Producto no encontrado.</p>";
+                }
+            } catch (error) {
+                console.error('Error fetching product data:', error);
+                document.getElementById('productDetails').innerHTML = "<p>Error al cargar los detalles del producto.</p>";
+            }
+        }
+
+        async function displayComments(asin) {
+            // Simular comentarios (reemplazar con llamada a API real)
+            const comments = await fetchComments(asin); // Función para obtener comentarios
+
+            if (comments.length > 0) {
+                let commentsHTML = "<h3>Comentarios del Producto</h3>";
+                comments.forEach(comment => {
+                    commentsHTML += `
+                        <div>
+                            <p><strong>Comentario:</strong> ${comment}</p>
+                        </div>
+                    `;
+                });
+                document.getElementById(`sentimentAnalysis${asin}`).innerHTML = commentsHTML;
+            } else {
+                document.getElementById(`sentimentAnalysis${asin}`).innerHTML = "<p>No hay comentarios disponibles.</p>";
+            }
+        }
+
+        async function fetchComments(asin) {
+            // Simular llamada a API para obtener comentarios (aquí puedes hacer la integración real)
+            return [
+                "Este teléfono tiene una pantalla increíble.",
+                "La cámara es excelente, toma fotos nítidas.",
+                "La batería dura mucho, ideal para uso diario.",
+                "El diseño es elegante y moderno."
+            ];
+        }
+
+        // Cargar los productos al iniciar la página
+        window.onload = function() {
+            loadProducts();
+        };
+    </script>
+</body>
+</html>
